@@ -295,12 +295,16 @@ int uv_udp_send(uv_udp_send_t* req,
   if (handle->type != UV_UDP)
     return UV_EINVAL;
 
-  if (addr->sa_family == AF_INET)
-    addrlen = sizeof(struct sockaddr_in);
-  else if (addr->sa_family == AF_INET6)
-    addrlen = sizeof(struct sockaddr_in6);
-  else
-    return UV_EINVAL;
+  if (addr != NULL) {
+    if (addr->sa_family == AF_INET)
+      addrlen = sizeof(struct sockaddr_in);
+    else if (addr->sa_family == AF_INET6)
+      addrlen = sizeof(struct sockaddr_in6);
+    else
+      return UV_EINVAL;
+  } else {
+    addrlen = 0;
+  }
 
   return uv__udp_send(req, handle, bufs, nbufs, addr, addrlen, send_cb);
 }

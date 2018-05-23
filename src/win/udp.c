@@ -896,7 +896,7 @@ int uv__udp_send(uv_udp_send_t* req,
   const struct sockaddr* bind_addr;
   int err;
 
-  if (!(handle->flags & UV_HANDLE_BOUND)) {
+  if (!(handle->flags & UV_HANDLE_BOUND) && addrlen) {
     if (addrlen == sizeof(uv_addr_ip4_any_))
       bind_addr = (const struct sockaddr*) &uv_addr_ip4_any_;
     else if (addrlen == sizeof(uv_addr_ip6_any_))

@@ -247,6 +247,7 @@ typedef struct {
 #define UV_UDP_SEND_PRIVATE_FIELDS                                            \
   void* queue[2];                                                             \
   struct sockaddr_storage addr;                                               \
+  int has_addr;                                                               \
   unsigned int nbufs;                                                         \
   uv_buf_t* bufs;                                                             \
   ssize_t status;                                                             \

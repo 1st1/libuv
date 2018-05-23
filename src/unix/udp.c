@@ -227,9 +227,14 @@ static void uv__udp_sendmsg(uv_udp_t* handle) {
     assert(req != NULL);
 
     memset(&h, 0, sizeof h);
-    h.msg_name = &req->addr;
-    h.msg_namelen = (req->addr.ss_family == AF_INET6 ?
-      sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in));
+    if (req->has_addr) {
+      h.msg_name = &req->addr;
+      h.msg_namelen = (req->addr.ss_family == AF_INET6 ?
+        sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in));
+    } else {
+      h.msg_name = NULL;
+      h.msg_namelen = 0;
+    }
     h.msg_iov = (struct iovec*) req->bufs;
     h.msg_iovlen = req->nbufs;
 
@@ -395,9 +400,11 @@ int uv__udp_send(uv_udp_send_t* req,
 
   assert(nbufs > 0);
 
-  err = uv__udp_maybe_deferred_bind(handle, addr->sa_family, 0);
-  if (err)
-    return err;
+  if (addr != NULL) {
+    err = uv__udp_maybe_deferred_bind(handle, addr->sa_family, 0);
+    if (err)
+      return err;
+  }
 
   /* It's legal for send_queue_count > 0 even when the write_queue is empty;
    * it means there are error-state requests in the write_completed_queue that
@@ -406,8 +413,13 @@ int uv__udp_send(uv_udp_send_t* req,
   empty_queue = (handle->send_queue_count == 0);
 
   uv__req_init(handle->loop, req, UV_UDP_SEND);
-  assert(addrlen <= sizeof(req->addr));
-  memcpy(&req->addr, addr, addrlen);
+  if (addr != NULL) {
+    assert(addrlen <= sizeof(req->addr));
+    memcpy(&req->addr, addr, addrlen);
+    req->has_addr = 1;
+  } else {
+    req->has_addr = 0;
+  }
   req->send_cb = send_cb;
   req->handle = handle;
   req->nbufs = nbufs;
